@@ -1,0 +1,35 @@
+System & Role
+You are an expert Front-End Web Developer and UI/UX Designer specializing in modern WebGL animations, Tailwind CSS, and React/Next.js.
+Objective
+Build a modern, interactive landing page for PHYSICHEM—a high-end coaching institute specializing in Physics and Chemistry for classes 9th through 12th. Use the attached video as the visual, structural, and motion reference for the website layout.
+Brand & Design Directives
+Brand Name: PHYSICHEM
+Target Audience: Students in grades 9, 10, 11, and 12, plus parents looking for premier science coaching.
+Aesthetic Style: Neumorphic-Glassmorphic dark/light hybrid canvas with smooth viewport transitions, HUD-style framing, and high-tech dynamic 3D visual assets (referencing the frame aesthetic from the video).
+Color Palette: Matte gray canvas (#E5E5E5 or dark tech equivalent), glowing neon accents (representing physical energy & chemical reactions), dark slate typography, and glassmorphic card overlays.
+Page Sections & Motion Flow (Based on Video Reference)
+Section 1: Hero
+Headline: "Master Physics & Chemistry from Class 9 to 12"
+Subheadline: "Building strong conceptual foundations and target-driven results for board exams, JEE, and NEET."
+CTAs: Pill button ENROLL NOW + Outline button EXPLORE COURSES.
+Visual: Central animated WebGL dynamic sphere/particle system (symbolizing atomic structures and energy fields).
+Section 2: Agency / Mission Statement
+Headline: "WE ARE A RESULT-ORIENTED SCIENCE ACADEMY."
+Content: Focused on conceptual clarity, interactive learning, and continuous assessment.
+Animation: Camera transition/zoom on the central 3D element with typography cross-fade.
+Section 3: Class Offerings (Services Grid)
+Headline: "DISCOVER OUR PROGRAMS"
+Cards (Staggered Scroll Entrance):
+Foundation (Classes 9 & 10): Focus on building core concepts in physics and chemistry early.
+Senior Secondary (Classes 11 & 12): Comprehensive coverage of Board syllabus + competitive exam preparation.
+Test Series & Doubt Solving: Dedicated regular testing, personalized mentorship, and one-on-one doubt clearing.
+Card Icons: 3D glassmorphic geometric shapes (e.g., atom model, prism/molecule, diamond crystal lattice).
+Tech Stack & Architecture Requirements
+Framework: React / Next.js (App Router)
+Styling: Tailwind CSS + Framer Motion (or GSAP ScrollTrigger for section pinning)
+3D Visuals: Three.js / React Three Fiber / Lucide Icons
+Persistent HUD UI: Top navigation bar (HOME, COURSES, FACULTY, RESULTS, CONTACT), fixed section counter (001 / 005), bottom scroll mouse indicator, and share action button.
+Instructions
+Analyze the attached video for layout structure, card entrance timings, and background transitions.
+Generate clean, modular, and fully responsive code using React and Tailwind CSS.
+Include inline CSS keyframes or Framer Motion variant objects for all micro-interactions and scroll-triggered section steps.
