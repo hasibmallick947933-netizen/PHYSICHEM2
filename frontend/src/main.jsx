@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createRoot } from 'react-dom/client'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowUpRight, ChevronDown, Menu, X, Play, Plus } from 'lucide-react'
 import './styles.css'
@@ -55,3 +56,5 @@ function App() {
   </div>
 }
 export default App
+
+createRoot(document.getElementById('root')).render(<App />)
