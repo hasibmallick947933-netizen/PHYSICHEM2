@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowUpRight, ChevronDown, Menu, X, Play, Plus } from 'lucide-react'
@@ -14,10 +14,20 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('HOME')
   const [section, setSection] = useState(1)
+  const videoRef = useRef(null)
   const { scrollYProgress } = useScroll()
   const videoScale = useTransform(scrollYProgress, [0, .35], [1.15, 1.02])
   const videoY = useTransform(scrollYProgress, [0, .5], ['0%', '14%'])
   const contentY = useTransform(scrollYProgress, [0, .23], [0, -90])
+
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.on('change', (progress) => {
+      const video = videoRef.current
+      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
+      video.currentTime = progress * video.duration
+    })
+    return unsubscribe
+  }, [scrollYProgress])
 
   useEffect(() => {
     const ids = ['home', 'mission', 'programs', 'method', 'contact']
@@ -38,7 +48,7 @@ function App() {
 
     <main>
       <section id="home" className="hero section-frame">
-        <motion.div className="video-wrap" style={{ scale: videoScale, y: videoY }}><video className="hero-video" autoPlay muted loop playsInline preload="auto"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video></motion.div>
+        <motion.div className="video-wrap" style={{ scale: videoScale, y: videoY }}><video ref={videoRef} className="hero-video" muted playsInline preload="auto"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video></motion.div>
         <div className="video-shade" />
         <motion.div className="hero-content" style={{ y: contentY }}><p className="eyebrow light"><span className="eyebrow-dot"/> SCIENCE, MADE CLEAR.</p><h1>Understand<br/><em>everything.</em></h1><div className="hero-bottom"><p>Physics and Chemistry coaching<br/>for the curious mind.</p><a className="circle-arrow" href="#programs"><ArrowUpRight size={22}/></a></div></motion.div>
         <div className="hero-label">PHYSICHEM <span>/ EST. 2018</span></div><div className="hero-scroll"><span>SCROLL TO EXPLORE</span><ChevronDown size={16}/></div>
