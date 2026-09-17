@@ -15,19 +15,39 @@ function App() {
   const [active, setActive] = useState('HOME')
   const [section, setSection] = useState(1)
   const videoRef = useRef(null)
-  const { scrollYProgress } = useScroll()
-  const videoScale = useTransform(scrollYProgress, [0, .35], [1.15, 1.02])
-  const videoY = useTransform(scrollYProgress, [0, .5], ['0%', '14%'])
-  const contentY = useTransform(scrollYProgress, [0, .23], [0, -90])
+  const { scrollY } = useScroll()
+  const videoScale = useTransform(scrollY, [0, 1800], [1.15, 1.02])
+  const videoY = useTransform(scrollY, [0, 2600], ['0%', '14%'])
+  const contentY = useTransform(scrollY, [0, 900], [0, -90])
 
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on('change', (progress) => {
+    const updateVideo = () => {
       const video = videoRef.current
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
+      const mission = document.getElementById('mission')
+      const contact = document.getElementById('contact')
+      if (!video || !mission || !contact || !Number.isFinite(video.duration) || video.duration <= 0) return
+
+      const y = window.scrollY
+      const firstTwoEnd = mission.offsetTop + mission.offsetHeight - window.innerHeight
+      const lastStart = contact.offsetTop
+      const lastEnd = contact.offsetTop + contact.offsetHeight - window.innerHeight
+      let progress = 0
+
+      if (y <= firstTwoEnd) {
+        progress = Math.max(0, Math.min(1, y / Math.max(1, firstTwoEnd))) * 0.58
+      } else if (y >= lastStart) {
+        progress = 0.58 + Math.max(0, Math.min(1, (y - lastStart) / Math.max(1, lastEnd - lastStart))) * 0.42
+      } else {
+        progress = 0.58
+      }
+
       video.currentTime = progress * video.duration
-    })
-    return unsubscribe
-  }, [scrollYProgress])
+    }
+    const unsubscribe = scrollY.on('change', updateVideo)
+    window.addEventListener('resize', updateVideo)
+    updateVideo()
+    return () => { unsubscribe(); window.removeEventListener('resize', updateVideo) }
+  }, [scrollY])
 
   useEffect(() => {
     const ids = ['home', 'mission', 'programs', 'method', 'contact']
