@@ -14,6 +14,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('HOME')
   const [section, setSection] = useState(1)
+  const cursorRef = useRef(null)
   const videoRef = useRef(null)
   const { scrollY } = useScroll()
   const videoScale = useTransform(scrollY, [0, 1800], [1.15, 1.02])
@@ -62,8 +63,26 @@ function App() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    const moveCursor = (event) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`
+      }
+    }
+    const setHover = (event) => {
+      const target = event.target.closest('a, button, .program-card, .principle')
+      cursorRef.current?.classList.toggle('is-hovering', Boolean(target))
+    }
+    window.addEventListener('pointermove', moveCursor)
+    window.addEventListener('pointerover', setHover)
+    return () => {
+      window.removeEventListener('pointermove', moveCursor)
+      window.removeEventListener('pointerover', setHover)
+    }
+  }, [])
+
   const close = () => setMenuOpen(false)
-  return <div className="site-shell">
+  return <div className="site-shell"><div ref={cursorRef} className="custom-cursor" aria-hidden="true"><span /></div>
     <header className="nav"><a className="wordmark" href="#home" onClick={close}>PHYSI<span>•</span>CHEM</a><nav className={menuOpen ? 'nav-links open' : 'nav-links'}>{['HOME','ABOUT','COURSES','METHOD','CONTACT'].map((item, i) => <a key={item} className={active === item ? 'active' : ''} href={'#' + ['home','mission','programs','method','contact'][i]} onClick={close}>{item}</a>)}</nav><button className="menu-toggle" onClick={() => setMenuOpen(v => !v)} aria-label="Toggle menu">{menuOpen ? <X size={22}/> : <Menu size={22}/>}</button><a className="nav-cta" href="#contact">JOIN THE CLASS <ArrowUpRight size={15}/></a></header>
 
     <main>
