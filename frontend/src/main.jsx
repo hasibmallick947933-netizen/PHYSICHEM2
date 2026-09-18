@@ -34,10 +34,27 @@ function App() {
     let touchStart = 0
     let locked = false
     let revealTimer = 0
+    let completedScrolls = 0
+    let videoTarget = 0
+    let videoFrame = 0
 
     const syncVideo = (progress) => {
-      const video = videoRef.current
-      if (video && Number.isFinite(video.duration) && video.duration > 0) video.currentTime = progress * video.duration
+      videoTarget = progress
+      if (videoFrame) return
+      const animateVideo = () => {
+        const video = videoRef.current
+        if (video && Number.isFinite(video.duration) && video.duration > 0) {
+          const targetTime = videoTarget * video.duration
+          video.currentTime += (targetTime - video.currentTime) * 0.16
+          if (Math.abs(targetTime - video.currentTime) > 0.02) {
+            videoFrame = requestAnimationFrame(animateVideo)
+            return
+          }
+          video.currentTime = targetTime
+        }
+        videoFrame = 0
+      }
+      videoFrame = requestAnimationFrame(animateVideo)
     }
 
     const setPanel = (next, revealAll = false) => {
@@ -48,6 +65,7 @@ function App() {
       const words = [...panels[activePanel].querySelectorAll('[data-story-word]')]
       words.forEach((word, index) => word.classList.toggle('is-visible', revealAll || index === 0))
       revealStep = revealAll ? words.length : Math.min(1, words.length)
+      completedScrolls = 0
       setSection(activePanel + 1)
       setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][activePanel])
       syncVideo(activePanel / Math.max(1, panels.length - 1))
@@ -65,7 +83,8 @@ function App() {
         return
       }
       if (direction > 0 && revealStep >= words.length && activePanel < panels.length - 1) {
-        setPanel(activePanel + 1)
+        completedScrolls += 1
+        if (completedScrolls >= 3) setPanel(activePanel + 1)
       }
       if (direction < 0 && revealStep === 0 && activePanel > 0) setPanel(activePanel - 1)
     }
@@ -84,7 +103,7 @@ function App() {
       if (Math.abs(distance) > 24 && !locked) {
         locked = true
         revealNextWord(distance > 0 ? 1 : -1)
-        window.setTimeout(() => { locked = false }, 90)
+window.setTimeout(() => { locked = false }, 55)
       }
     }
 
