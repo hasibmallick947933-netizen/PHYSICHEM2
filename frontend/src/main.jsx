@@ -12,7 +12,7 @@ const programs = [
 
 function RevealHeading({ children, className = '' }) {
   const lines = children.split('|')
-  return <>{lines.map((line, lineIndex) => <span className={`reveal-line ${className}`} key={`${line}-${lineIndex}`}>{line.split(' ').map((word, wordIndex) => <span className="reveal-word" key={`${word}-${wordIndex}`}>{word}&nbsp;</span>)}</span>)}</>
+  return <>{lines.map((line, lineIndex) => <span className={`reveal-line ${className}`} key={`${line}-${lineIndex}`}>{line.split(' ').map((word, wordIndex) => <span className="reveal-word" data-story-word key={`${word}-${wordIndex}`}>{word}&nbsp;</span>)}</span>)}</>
 }
 
 function App() {
@@ -28,72 +28,70 @@ function App() {
 
   useEffect(() => {
     const ids = ['home', 'mission', 'programs', 'method', 'contact']
-    const labels = ['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT']
-    let frame = 0
-    let lastTime = -1
-    let lastSection = 1
-    let measurements = null
+    const panels = ids.map((id) => document.getElementById(id)).filter(Boolean)
+    let activePanel = 0
+    let revealStep = 0
+    let touchStart = 0
+    let locked = false
 
-    const measure = () => {
-      const mission = document.getElementById('mission')
-      const contact = document.getElementById('contact')
-      if (!mission || !contact) return
-      measurements = {
-        firstTwoEnd: mission.offsetTop + mission.offsetHeight - window.innerHeight,
-        lastStart: contact.offsetTop,
-        lastEnd: contact.offsetTop + contact.offsetHeight - window.innerHeight,
+    const setPanel = (next) => {
+      activePanel = Math.max(0, Math.min(panels.length - 1, next))
+      panels.forEach((panel, index) => panel.classList.toggle('is-active', index === activePanel))
+      revealStep = 0
+      panels[activePanel].querySelectorAll('[data-story-word]').forEach((word) => word.classList.remove('is-visible'))
+      setSection(activePanel + 1)
+      setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][activePanel])
+      window.scrollTo(0, 0)
+      if (activePanel === 0) window.setTimeout(() => revealNextWord(1), 260)
+    }
+
+    const revealNextWord = (direction) => {
+      const words = [...panels[activePanel].querySelectorAll('[data-story-word]')]
+      if (direction < 0 && revealStep === 0) { setPanel(activePanel - 1); return }
+      if (direction > 0 && revealStep < words.length) {
+        words[revealStep]?.classList.add('is-visible')
+        revealStep += 1
+        return
+      }
+      if (direction > 0) setPanel(activePanel + 1)
+    }
+
+    const onWheel = (event) => {
+      event.preventDefault()
+      if (locked || Math.abs(event.deltaY) < 8) return
+      locked = true
+      revealNextWord(event.deltaY > 0 ? 1 : -1)
+      window.setTimeout(() => { locked = false }, 105)
+    }
+    const onTouchStart = (event) => { touchStart = event.touches[0].clientY }
+    const onTouchMove = (event) => { event.preventDefault() }
+    const onTouchEnd = (event) => {
+      const distance = touchStart - event.changedTouches[0].clientY
+      if (Math.abs(distance) > 24 && !locked) {
+        locked = true
+        revealNextWord(distance > 0 ? 1 : -1)
+        window.setTimeout(() => { locked = false }, 150)
       }
     }
 
-    const update = () => {
-      frame = 0
-      if (!measurements) measure()
-      const y = window.scrollY
-      const video = videoRef.current
-      if (video && measurements && Number.isFinite(video.duration) && video.duration > 0) {
-        const { firstTwoEnd, lastStart, lastEnd } = measurements
-        const progress = y <= firstTwoEnd
-          ? Math.max(0, Math.min(1, y / Math.max(1, firstTwoEnd))) * 0.58
-          : y >= lastStart
-            ? 0.58 + Math.max(0, Math.min(1, (y - lastStart) / Math.max(1, lastEnd - lastStart))) * 0.42
-            : 0.58
-        const nextTime = progress * video.duration
-        if (Math.abs(nextTime - lastTime) > 0.025) {
-          video.currentTime = nextTime
-          lastTime = nextTime
-        }
-      }
-
-      const activeY = y + window.innerHeight * .42
-      let index = 0
-      ids.forEach((id, i) => { if (document.getElementById(id)?.offsetTop <= activeY) index = i })
-      if (index + 1 !== lastSection) {
-        lastSection = index + 1
-        setSection(lastSection)
-        setActive(labels[index])
-      }
+    const onHashChange = () => {
+      const index = ids.indexOf(window.location.hash.slice(1))
+      if (index >= 0) setPanel(index)
     }
-
-    const requestUpdate = () => { if (!frame) frame = requestAnimationFrame(update) }
-    const snapToSection = () => {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-      const sections = ids.map((id) => document.getElementById(id)).filter(Boolean)
-      const current = window.scrollY
-      const nearest = sections.reduce((best, candidate) => Math.abs(candidate.offsetTop - current) < Math.abs(best.offsetTop - current) ? candidate : best, sections[0])
-      if (nearest && Math.abs(nearest.offsetTop - current) > 8) nearest.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setPanel(Math.max(0, ids.indexOf(window.location.hash.slice(1))))
+    window.addEventListener('hashchange', onHashChange)
+    window.addEventListener('wheel', onWheel, { passive: false })
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: false })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('hashchange', onHashChange)
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onTouchEnd)
     }
-    let snapTimer = 0
-    const onScroll = () => {
-      requestUpdate()
-      window.clearTimeout(snapTimer)
-      snapTimer = window.setTimeout(snapToSection, 110)
-    }
-    const unsubscribe = scrollY.on('change', requestUpdate)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', () => { measurements = null; requestUpdate() }, { passive: true })
-    requestUpdate()
-    return () => { unsubscribe(); window.removeEventListener('scroll', onScroll); window.clearTimeout(snapTimer); if (frame) cancelAnimationFrame(frame) }
-  }, [scrollY])
+  }, [])
 
   useEffect(() => {
     const moveCursor = (event) => {
