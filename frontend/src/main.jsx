@@ -58,14 +58,12 @@ function App() {
         words[revealStep]?.classList.add('is-visible')
         revealStep += 1
         syncVideo((activePanel + revealStep / Math.max(1, words.length) * 0.82) / Math.max(1, panels.length - 1))
-        if (revealStep === words.length && activePanel < panels.length - 1) {
-          window.setTimeout(() => setPanel(activePanel + 1), 520)
-        }
         return
       }
-      if (direction > 0 && activePanel < panels.length - 1) {
+      if (direction > 0 && revealStep >= words.length && activePanel < panels.length - 1) {
         setPanel(activePanel + 1)
       }
+      if (direction < 0 && revealStep === 0 && activePanel > 0) setPanel(activePanel - 1)
     }
 
     const onWheel = (event) => {
@@ -73,7 +71,7 @@ function App() {
       if (locked || Math.abs(event.deltaY) < 8) return
       locked = true
       revealNextWord(event.deltaY > 0 ? 1 : -1)
-      window.setTimeout(() => { locked = false }, 45)
+      window.setTimeout(() => { locked = false }, 90)
     }
     const onTouchStart = (event) => { touchStart = event.touches[0].clientY }
     const onTouchMove = (event) => { event.preventDefault() }
