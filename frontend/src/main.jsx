@@ -22,46 +22,60 @@ function App() {
   const contentY = useTransform(scrollY, [0, 900], [0, -90])
 
   useEffect(() => {
-    const updateVideo = () => {
-      const video = videoRef.current
+    const ids = ['home', 'mission', 'programs', 'method', 'contact']
+    const labels = ['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT']
+    let frame = 0
+    let lastTime = -1
+    let lastSection = 1
+    let measurements = null
+
+    const measure = () => {
       const mission = document.getElementById('mission')
       const contact = document.getElementById('contact')
-      if (!video || !mission || !contact || !Number.isFinite(video.duration) || video.duration <= 0) return
+      if (!mission || !contact) return
+      measurements = {
+        firstTwoEnd: mission.offsetTop + mission.offsetHeight - window.innerHeight,
+        lastStart: contact.offsetTop,
+        lastEnd: contact.offsetTop + contact.offsetHeight - window.innerHeight,
+      }
+    }
 
+    const update = () => {
+      frame = 0
+      if (!measurements) measure()
       const y = window.scrollY
-      const firstTwoEnd = mission.offsetTop + mission.offsetHeight - window.innerHeight
-      const lastStart = contact.offsetTop
-      const lastEnd = contact.offsetTop + contact.offsetHeight - window.innerHeight
-      let progress = 0
-
-      if (y <= firstTwoEnd) {
-        progress = Math.max(0, Math.min(1, y / Math.max(1, firstTwoEnd))) * 0.58
-      } else if (y >= lastStart) {
-        progress = 0.58 + Math.max(0, Math.min(1, (y - lastStart) / Math.max(1, lastEnd - lastStart))) * 0.42
-      } else {
-        progress = 0.58
+      const video = videoRef.current
+      if (video && measurements && Number.isFinite(video.duration) && video.duration > 0) {
+        const { firstTwoEnd, lastStart, lastEnd } = measurements
+        const progress = y <= firstTwoEnd
+          ? Math.max(0, Math.min(1, y / Math.max(1, firstTwoEnd))) * 0.58
+          : y >= lastStart
+            ? 0.58 + Math.max(0, Math.min(1, (y - lastStart) / Math.max(1, lastEnd - lastStart))) * 0.42
+            : 0.58
+        const nextTime = progress * video.duration
+        if (Math.abs(nextTime - lastTime) > 0.025) {
+          video.currentTime = nextTime
+          lastTime = nextTime
+        }
       }
 
-      video.currentTime = progress * video.duration
-    }
-    const unsubscribe = scrollY.on('change', updateVideo)
-    window.addEventListener('resize', updateVideo)
-    updateVideo()
-    return () => { unsubscribe(); window.removeEventListener('resize', updateVideo) }
-  }, [scrollY])
-
-  useEffect(() => {
-    const ids = ['home', 'mission', 'programs', 'method', 'contact']
-    const onScroll = () => {
-      const y = window.scrollY + window.innerHeight * .42
+      const activeY = y + window.innerHeight * .42
       let index = 0
-      ids.forEach((id, i) => { if (document.getElementById(id)?.offsetTop <= y) index = i })
-      setSection(index + 1)
-      setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][index])
+      ids.forEach((id, i) => { if (document.getElementById(id)?.offsetTop <= activeY) index = i })
+      if (index + 1 !== lastSection) {
+        lastSection = index + 1
+        setSection(lastSection)
+        setActive(labels[index])
+      }
     }
-    window.addEventListener('scroll', onScroll, { passive: true }); onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+
+    const requestUpdate = () => { if (!frame) frame = requestAnimationFrame(update) }
+    const unsubscribe = scrollY.on('change', requestUpdate)
+    window.addEventListener('scroll', requestUpdate, { passive: true })
+    window.addEventListener('resize', () => { measurements = null; requestUpdate() }, { passive: true })
+    requestUpdate()
+    return () => { unsubscribe(); window.removeEventListener('scroll', requestUpdate); if (frame) cancelAnimationFrame(frame) }
+  }, [scrollY])
 
   useEffect(() => {
     const moveCursor = (event) => {
@@ -87,7 +101,7 @@ function App() {
 
     <main>
       <section id="home" className="hero section-frame">
-        <motion.div className="video-wrap" style={{ scale: videoScale, y: videoY }}><video ref={videoRef} className="hero-video" muted playsInline preload="auto"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video></motion.div>
+        <motion.div className="video-wrap" style={{ scale: videoScale, y: videoY }}><video ref={videoRef} className="hero-video" muted playsInline preload="metadata"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video></motion.div>
         <div className="video-shade" />
         <motion.div className="hero-content" style={{ y: contentY }}><p className="eyebrow light"><span className="eyebrow-dot"/> SCIENCE, MADE CLEAR.</p><h1>Understand<br/><em>everything.</em></h1><div className="hero-bottom"><p>Physics and Chemistry coaching<br/>for the curious mind.</p><a className="circle-arrow" href="#programs"><ArrowUpRight size={22}/></a></div></motion.div>
         <div className="hero-label">PHYSICHEM <span>/ EST. 2018</span></div><div className="hero-scroll"><span>SCROLL TO EXPLORE</span><ChevronDown size={16}/></div>
