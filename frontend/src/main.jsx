@@ -58,6 +58,9 @@ function App() {
         words[revealStep]?.classList.add('is-visible')
         revealStep += 1
         syncVideo((activePanel + revealStep / Math.max(1, words.length) * 0.82) / Math.max(1, panels.length - 1))
+        if (revealStep === words.length && activePanel < panels.length - 1) {
+          window.setTimeout(() => setPanel(activePanel + 1), 520)
+        }
         return
       }
       if (direction > 0 && activePanel < panels.length - 1) {
