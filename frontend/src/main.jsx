@@ -34,6 +34,11 @@ function App() {
     let touchStart = 0
     let locked = false
 
+    const syncVideo = (progress) => {
+      const video = videoRef.current
+      if (video && Number.isFinite(video.duration) && video.duration > 0) video.currentTime = progress * video.duration
+    }
+
     const setPanel = (next) => {
       activePanel = Math.max(0, Math.min(panels.length - 1, next))
       panels.forEach((panel, index) => panel.classList.toggle('is-active', index === activePanel))
@@ -41,6 +46,7 @@ function App() {
       panels[activePanel].querySelectorAll('[data-story-word]').forEach((word) => word.classList.remove('is-visible'))
       setSection(activePanel + 1)
       setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][activePanel])
+      syncVideo(activePanel / Math.max(1, panels.length - 1))
       window.scrollTo(0, 0)
       if (activePanel === 0) window.setTimeout(() => revealNextWord(1), 260)
     }
@@ -51,6 +57,7 @@ function App() {
       if (direction > 0 && revealStep < words.length) {
         words[revealStep]?.classList.add('is-visible')
         revealStep += 1
+        syncVideo((activePanel + revealStep / Math.max(1, words.length) * 0.82) / Math.max(1, panels.length - 1))
         return
       }
       if (direction > 0) setPanel(activePanel + 1)
@@ -115,10 +122,9 @@ function App() {
   return <div className="site-shell"><div ref={cursorRef} className="custom-cursor" aria-hidden="true"><span /></div>
     <header className="nav"><a className="wordmark" href="#home" onClick={close}>PHYSI<span>•</span>CHEM</a><nav className={menuOpen ? 'nav-links open' : 'nav-links'}>{['HOME','ABOUT','COURSES','METHOD','CONTACT'].map((item, i) => <a key={item} className={active === item ? 'active' : ''} href={'#' + ['home','mission','programs','method','contact'][i]} onClick={close}>{item}</a>)}</nav><button className="menu-toggle" onClick={() => setMenuOpen(v => !v)} aria-label="Toggle menu">{menuOpen ? <X size={22}/> : <Menu size={22}/>}</button><a className="nav-cta" href="#contact">JOIN THE CLASS <ArrowUpRight size={15}/></a></header>
 
+    <div className="global-video" aria-hidden="true"><video ref={videoRef} className="hero-video" muted playsInline preload="metadata"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video><div className="video-shade" /></div>
     <main>
       <section id="home" className="hero section-frame">
-        <motion.div className="video-wrap" style={{ scale: videoScale, y: videoY }}><video ref={videoRef} className="hero-video" muted playsInline preload="metadata"><source src="/15923153_1280_720_24fps.mp4" type="video/mp4" /></video></motion.div>
-        <div className="video-shade" />
         <motion.div className="hero-content" style={{ y: contentY }}><p className="eyebrow light"><span className="eyebrow-dot"/> SCIENCE, MADE CLEAR.</p><h1><RevealHeading>Understand|everything.</RevealHeading></h1><div className="hero-bottom"><p>Physics and Chemistry coaching<br/>for the curious mind.</p><a className="circle-arrow" href="#programs"><ArrowUpRight size={22}/></a></div></motion.div>
         <div className="hero-label">PHYSICHEM <span>/ EST. 2018</span></div><div className="hero-scroll"><span>SCROLL TO EXPLORE</span><ChevronDown size={16}/></div>
       </section>
