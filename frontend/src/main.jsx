@@ -48,7 +48,7 @@ function App() {
       setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][activePanel])
       syncVideo(activePanel / Math.max(1, panels.length - 1))
       window.scrollTo(0, 0)
-      if (activePanel === 0) window.setTimeout(() => revealNextWord(1), 260)
+      window.setTimeout(() => revealNextWord(1), 260)
     }
 
     const revealNextWord = (direction) => {
@@ -60,7 +60,9 @@ function App() {
         syncVideo((activePanel + revealStep / Math.max(1, words.length) * 0.82) / Math.max(1, panels.length - 1))
         return
       }
-      if (direction > 0) setPanel(activePanel + 1)
+      if (direction > 0 && activePanel < panels.length - 1) {
+        setPanel(activePanel + 1)
+      }
     }
 
     const onWheel = (event) => {
@@ -68,7 +70,7 @@ function App() {
       if (locked || Math.abs(event.deltaY) < 8) return
       locked = true
       revealNextWord(event.deltaY > 0 ? 1 : -1)
-      window.setTimeout(() => { locked = false }, 105)
+      window.setTimeout(() => { locked = false }, 45)
     }
     const onTouchStart = (event) => { touchStart = event.touches[0].clientY }
     const onTouchMove = (event) => { event.preventDefault() }
@@ -77,7 +79,7 @@ function App() {
       if (Math.abs(distance) > 24 && !locked) {
         locked = true
         revealNextWord(distance > 0 ? 1 : -1)
-        window.setTimeout(() => { locked = false }, 150)
+        window.setTimeout(() => { locked = false }, 90)
       }
     }
 
@@ -87,13 +89,13 @@ function App() {
     }
     setPanel(Math.max(0, ids.indexOf(window.location.hash.slice(1))))
     window.addEventListener('hashchange', onHashChange)
-    window.addEventListener('wheel', onWheel, { passive: false })
+    document.addEventListener('wheel', onWheel, { passive: false, capture: true })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('touchend', onTouchEnd, { passive: true })
     return () => {
       window.removeEventListener('hashchange', onHashChange)
-      window.removeEventListener('wheel', onWheel)
+      document.removeEventListener('wheel', onWheel, { capture: true })
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
