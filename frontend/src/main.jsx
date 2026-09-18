@@ -75,11 +75,24 @@ function App() {
     }
 
     const requestUpdate = () => { if (!frame) frame = requestAnimationFrame(update) }
+    const snapToSection = () => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+      const sections = ids.map((id) => document.getElementById(id)).filter(Boolean)
+      const current = window.scrollY
+      const nearest = sections.reduce((best, candidate) => Math.abs(candidate.offsetTop - current) < Math.abs(best.offsetTop - current) ? candidate : best, sections[0])
+      if (nearest && Math.abs(nearest.offsetTop - current) > 8) nearest.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    let snapTimer = 0
+    const onScroll = () => {
+      requestUpdate()
+      window.clearTimeout(snapTimer)
+      snapTimer = window.setTimeout(snapToSection, 110)
+    }
     const unsubscribe = scrollY.on('change', requestUpdate)
-    window.addEventListener('scroll', requestUpdate, { passive: true })
+    window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', () => { measurements = null; requestUpdate() }, { passive: true })
     requestUpdate()
-    return () => { unsubscribe(); window.removeEventListener('scroll', requestUpdate); if (frame) cancelAnimationFrame(frame) }
+    return () => { unsubscribe(); window.removeEventListener('scroll', onScroll); window.clearTimeout(snapTimer); if (frame) cancelAnimationFrame(frame) }
   }, [scrollY])
 
   useEffect(() => {
