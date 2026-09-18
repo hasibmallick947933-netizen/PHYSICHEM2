@@ -33,27 +33,31 @@ function App() {
     let revealStep = 0
     let touchStart = 0
     let locked = false
+    let revealTimer = 0
 
     const syncVideo = (progress) => {
       const video = videoRef.current
       if (video && Number.isFinite(video.duration) && video.duration > 0) video.currentTime = progress * video.duration
     }
 
-    const setPanel = (next) => {
+    const setPanel = (next, revealAll = false) => {
+      window.clearTimeout(revealTimer)
       activePanel = Math.max(0, Math.min(panels.length - 1, next))
       panels.forEach((panel, index) => panel.classList.toggle('is-active', index === activePanel))
       revealStep = 0
-      panels[activePanel].querySelectorAll('[data-story-word]').forEach((word) => word.classList.remove('is-visible'))
+      const words = [...panels[activePanel].querySelectorAll('[data-story-word]')]
+      words.forEach((word, index) => word.classList.toggle('is-visible', revealAll || index === 0))
+      revealStep = revealAll ? words.length : Math.min(1, words.length)
       setSection(activePanel + 1)
       setActive(['HOME', 'ABOUT', 'COURSES', 'METHOD', 'CONTACT'][activePanel])
       syncVideo(activePanel / Math.max(1, panels.length - 1))
       window.scrollTo(0, 0)
-      window.setTimeout(() => revealNextWord(1), 260)
+      if (!revealAll) revealTimer = window.setTimeout(() => revealNextWord(1), 260)
     }
 
     const revealNextWord = (direction) => {
       const words = [...panels[activePanel].querySelectorAll('[data-story-word]')]
-      if (direction < 0 && revealStep === 0) { setPanel(activePanel - 1); return }
+      if (direction < 0 && activePanel > 0) { setPanel(activePanel - 1, true); return }
       if (direction > 0 && revealStep < words.length) {
         words[revealStep]?.classList.add('is-visible')
         revealStep += 1
